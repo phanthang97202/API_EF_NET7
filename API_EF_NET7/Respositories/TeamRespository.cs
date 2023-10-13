@@ -1,6 +1,8 @@
 ﻿using API_EF_NET7.Interfaces;
 using API_EF_NET7.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Any;
 using System.Linq.Expressions;
 
 namespace API_EF_NET7.Respositories
@@ -16,9 +18,7 @@ namespace API_EF_NET7.Respositories
         {
             try
             {
-
                 Team newTeam = new Team() { ConfederationId = team.ConfederationId, CountryName = team.CountryName };
-
                 _dbContextTeam.Team.Add(newTeam);
                 await _dbContextTeam.SaveChangesAsync();
                 return new Team
@@ -33,24 +33,67 @@ namespace API_EF_NET7.Respositories
             }
         }
 
-        public Task<int> DeleteTeam(int teamId)
+        public async Task<int> DeleteTeam(int teamId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var rowEffected = await _dbContextTeam.Team.Where(item => item.TeamId == teamId).ExecuteDeleteAsync();
+                return rowEffected;
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message, ex);
+            }
         }
 
-        public Task<List<Team>> GetAllTeams()
+        public async Task<List<Team>> GetAllTeams()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var teams = await _dbContextTeam.Team.Select(e => new Team { CountryName = e.CountryName, TeamId = e.TeamId, ConfederationId = e.ConfederationId }).ToListAsync();
+                return teams;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
 
-        public Task<Team> GetTeamById(int teamId)
+        public async Task<Team> GetTeamById(int teamId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var team = await _dbContextTeam.Team.SingleOrDefaultAsync(team => team.TeamId == teamId);
+                if (team != null)
+                {
+                    return team;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
 
-        public Task<int> UpdateTeam(Team team)
+        public async Task<int> UpdateTeam(Team team)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var x = await _dbContextTeam.Team.Where(t => t.TeamId == team.TeamId)
+                    .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.CountryName, team.CountryName)
+                    .SetProperty(p => p.ConfederationId, team.ConfederationId));
+                return x;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
     }
 }
